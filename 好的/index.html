@@ -3,12 +3,44 @@
 	<head>
 		<meta charset="utf-8" />
 		<title></title>
+		<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
 	</head>
 	<body>
-		hello world !
-		dev111
-		v111
-		feature/test
-		release/test
+		<label disabled="true">
+			<input type="radio" name="t" checked="checked" />
+			测试一下
+		</label>
+		<label disabled="true">
+			<input type="radio" name="t" />
+			测试一下
+		</label>
 	</body>
 </html>
+<script type="text/javascript">
+	var data = [
+		{
+			a:null
+		},
+		{
+			a:null
+		},
+		{
+			a:null
+		},
+		{
+			a:null
+		},
+	] ;
+	function f(d){
+		return d
+		.map((item,index) =>{
+			item.a = index ;
+			return item ;
+		})
+		.filter(k => k.a >= 2)
+	}
+	
+	var t = f(data) ;
+	console.log(t)
+	
+</script>
