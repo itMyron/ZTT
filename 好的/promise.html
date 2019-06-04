@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.js"></script>
+	</head>
+	<body>
+	</body>
+</html>
+<script type="text/javascript">
+	
+	var num = 0 ;
+	var timer = setInterval(()=>{
+		num = num + 1 ; 
+	},1000)
+	
+	
+	var obj = {
+			doubleAfter(){
+				return new Promise((resolve,reject)=>{
+					setTimeout(()=>{
+						//resolve(100)
+						reject(200)
+					},1000)
+					
+				})
+			},
+			async testResult(){
+				await this.doubleAfter()
+				.then(res=>{
+					console.log("成功：",res)
+				})
+				.catch(err=>{
+					console.log("失败：",err)
+				})
+		//		console.log("a:",num) ;
+		//		await doubleAfter() ;
+		//		console.log("b:",num) ;
+		//		await doubleAfter() ;
+		//		console.log("c:",num) ;
+		//		await doubleAfter() ;
+		//		clearInterval(timer);
+		//		console.log("d:",num) ;
+			
+		}
+	}
+	
+//	async function testResult(){
+//		await doubleAfter()
+//		.then(res=>{
+//			console.log("成功：",res)
+//		})
+//		.catch(err=>{
+//			console.log("失败：",err)
+//		})
+////		console.log("a:",num) ;
+////		await doubleAfter() ;
+////		console.log("b:",num) ;
+////		await doubleAfter() ;
+////		console.log("c:",num) ;
+////		await doubleAfter() ;
+////		clearInterval(timer);
+////		console.log("d:",num) ;
+//		
+//	}
+	
+	obj.testResult()
+	
+//	var p1 = new Promise(function(resolve,reject){
+//		setTimeout(function(){
+//			resolve() ;
+//		},1000)
+//	})
+//	var p2 = new Promise(function(resolve,reject){
+//		setTimeout(function(){
+//			resolve() ;
+//		},1000)
+//	})
+//	var p3 = new Promise(function(resolve,reject){
+//		setTimeout(function(){
+//			resolve() ;
+//		},1000)
+//	})
+//	var p4 = new Promise(function(resolve,reject){
+//		setTimeout(function(){
+//			resolve() ;
+//		},1000)
+//	})
+//	Promise.all([p1,p2,p3,p4]).then(function(result){
+//		clearInterval(timer);
+//		console.log(num) ;
+//	})
+var t ={
+	fa:function fa(){
+		console.log("朱文涛")
+	}
+}
+t.fa()
+	
+</script>

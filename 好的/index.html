@@ -1,18 +1,499 @@
-<!DOCTYPE html>
-<html>
-	<head>
-		<meta charset="utf-8" />
-		<title></title>
-	</head>
-	<body>
-		<a href="http://call-center-service.test.91gfd.cn/recordFile/freeswitch/recordings/2019-05-29/1004_15665111890_20190529112817_out.wav">
-			点击
-		</a>
-	</body>
-</html>
-<script src="https://cdn.bootcss.com/jquery/3.4.0/jquery.min.js"></script>
-<script>
-	
-	
-	
-</script>
+require(['bootbox', 'enum', 'datepicker', 'plugin', 'datatable_bootstrap', 'bootstrap'], function (bootbox, enums) {
+    // 可以设置 alert, throw, function, -- 置空表示不做处理
+    $.fn.DataTable.ext.errMode = '';
+    $('#select_all').click(function(){
+        $('input[name=channelList]').prop('checked',this.checked);
+    });
+
+    var ids = util.getParameter(window.location.href,'ids');
+    var apps = window.localStorage.getItem("appids");
+
+    var tbChannels = $("#tb_channels").DataTable({
+        paging: false,
+        searching: false,
+        destroy: true,
+        info: false,
+        autoWidth: false,
+        dom: 'rtip',
+        ordering:false,
+        ajax: {
+            url: util.baseUrl + '/collection/delegateChannelList',
+            dataSrc:function(data) {
+                if (data.cmd != 0) {
+                    bootbox.alert("服务器错误");
+                    return [];
+                }
+                return data.result;
+            }
+        },
+        columns: [{
+            data: "id",
+            render: function(data, type, row) {
+                return '<input type="checkbox" name="channelList" value="'+data+'" size="10" />';
+            }
+        }, {
+            data: "name"
+        }, {
+            data: "id",
+            render: function(data, type, row) {
+                return '<input type="text" name="per_'+data+'" value="0" />';
+            }
+        }]
+    });
+
+    var tbDelegateCases = $("#tb_delegate_cases").DataTable({
+        paging: false,
+        searching: false,
+        destroy: true,
+        info: false,
+        autoWidth: false,
+        dom: 'rtip',
+        ordering:false,
+        ajax: {
+            //url: util.baseUrl + '/collection/collectionDelegateCasesDetail',
+            url: util.baseUrl + '/onPassageCase/delegateCaseDetail',
+            type:"POST",
+            contentType: "application/json",
+            data: function(data){
+                data['detailIdList']=ids.split(",");
+                return JSON.stringify(data);
+            },
+            dataSrc:function(data) {
+                if (data.cmd !== 0) {
+                    bootbox.alert("服务器错误");
+                    return [];
+                }
+
+                if (data.result) {
+                    return data.result;
+                } else {
+                    return [];
+                }
+            }
+        },
+        columns: [{
+            data: "app"
+        }, {
+            data: "caseCnt"
+        }, {
+            data: "caseTotalAmount",
+            render: function(data, type, row) {
+                return util.toNumber(data, 2);
+            }
+        }]
+    });
+
+    var orderIds =[];
+
+    //不需要加载显示列表
+    if(!(window.sessionStorage.getItem("zaitu")==1||window.localStorage.getItem("kaixin")==1)){
+        var tb_list = $('#tb_delegate_onpassage').DataTable({
+            ordering: false,
+            dom: 'tip',
+            serverSide: true,
+            processing: true,
+            paging:false,
+            info: false,
+            ajax: {
+                url: util.baseUrl + '/collection/onPassageCases',
+                data: function(data){
+                    data['ids']=ids;
+                },
+                dataSrc: function(json) {
+                    //console.log(json);
+                    json.result.forEach(function(item, index) {
+                        item['index'] = index + 1;
+                        orderIds.push(item.orderId);
+                    });
+                    return json.result;
+                },
+                error: function (argument) {
+                    bootbox.alert(json.msg || "服务器错误")
+                }
+            },
+            columns: [
+                {data: "index"},
+                {
+                    data: "userName",
+                    render: function(data, type, row) {
+                        return '<a href="/Collection_Case/' + row['userId'] + '/' + row['orderId'] + '/' + row['caseId'] + '" target="_blank">' + data + '</a>';
+                    }
+                },
+                {data: "payAt"},
+                {data: "period"},
+                {
+                    data: "amount",
+                    render: function (data, type, row) {
+                        return util.toNumber(data, 2)
+                    }
+                },
+
+                {
+                    data: "overdueAmount",
+                    render: function (data, type, row) {
+                        if (data == 0) {
+                            return '--';
+                        }
+                        return util.toNumber(data, 2)
+                    }
+                },
+                {data: "overduePeriods"},
+                {data: "maxOverdueDays"},
+                {data: "overdueLoans"}
+            ],
+            "drawCallback": function( settings ) {
+
+            }
+        });
+
+    }
+    if((window.sessionStorage.getItem("zaitu")==1||window.localStorage.getItem("kaixin")==1)){
+        $("#tb_delegate_onpassage").css("display","none");
+        window.sessionStorage.removeItem("zaitu");
+    }
+
+
+    var tbLoanCheck = $('#tb_loan_check').DataTable({
+        data: [],
+        paging: false,
+        info: false,
+        ordering: false,
+        dom: 'rtip',
+        autoWidth: false,
+        columns: [
+            {data: "userName"},
+            {data: "payAt",render:function(data,type,row){return util.formatDate(data,'yyyy-MM-dd')}},
+            {
+                data: "amount",
+                render: function (data, type, row) {
+                    return util.toNumber(data, 2)
+                }
+            },
+            {data: "period"}
+        ]
+    });
+
+    var tbCaseCheck = $('#tb_case_check').DataTable({
+        data: [],
+        paging: false,
+        info: false,
+        ordering: false,
+        dom: 'rtip',
+        autoWidth: false,
+        columns: [
+            {
+                data: "appIdList"
+            },
+            {
+                data: "channelName"
+            },
+            {
+                data: "count",
+                render: function (data, type, row) {
+                    return util.toNumber(data, 2)
+                }
+            },
+            {
+                data: "amount"
+            }
+        ]
+    });
+
+    var isEarly=false;
+    $('#btn-delegate').click(function () {
+        isEarly=true;
+        $("#delegateType").val('EARLY')
+        var param={
+            channelList:[],
+            sum:0,
+        };
+        $("input[name=channelList]:checked").each(function(){
+            var id=$(this).val();
+            param.channelList.push(id);
+            param.sum += parseInt($('input[name=per_'+id).val());
+        });
+        if (param.channelList < 1) {
+            bootbox.alert("至少选一个渠道！");
+            return;
+        } else {
+            if (param.sum == 100) {
+                $("#modal-endingforsee").modal('show');
+                startDelegate(true);
+                batchDelegatePreview();
+            } else {
+                bootbox.alert("比例配置总和不等于 100%");
+                return;
+            }
+        }
+    });
+
+    function startDelegate(k) {
+        var flag = !!k || "" ;
+        $('#packageNo').parents('.form-group').hide();
+        $('#channel').parents('.form-group').hide();
+
+        // 判断委外类型
+        if(isEarly) {
+            $('#delegateType option[value=EARLY]').show();
+            $('#delegateType option[value=EARLY]').prop('selected',true);
+            //$('#delegateType').prop('disabled',true);
+        } else {
+            $('#delegateType option[value=EARLY]').prop('selected',true);
+            $('#delegateType option[value=EARLY]').hide();
+            $('#delegateType option[value=ONE_HAND]').prop('selected',true);
+            //$('#delegateType').prop('disabled',false);
+        }
+
+        if (ids.length == 0) {
+            bootbox.alert('请选择要委外的案件！');
+            return;
+        }
+
+        var today = new Date();
+        var nextday = new Date();
+        nextday.setDate(today.getDate() + 30);
+
+        $('#start').datepicker('setDate', today);
+        $('#end').datepicker('setDate', nextday);
+
+        checkCollectionCase(flag);
+    }
+    function batchDelegatePreview() {
+        batchDelegate(true,function(data){
+            tableOdd.clear().draw();
+            for(var i=0;i<data.result.length;i++){
+
+                tableOdd.rows.add(data.result[i]);
+                tableOdd.columns.adjust().draw();
+            }
+
+        });
+
+    }
+    var tableOdd=$('#tb_case_end').DataTable({
+        data: [],
+        paging: false,
+        info: false,
+        ordering: false,
+        dom: 'rtip',
+        autoWidth: false,
+        columns: [
+            {
+                data: "appId"
+            },
+            {
+                data: "channelName"
+            },
+            {
+                data: "caseIdList",
+                render: function (data) {
+                    if (data) {
+                        return data.length;
+                    }
+                }
+            },
+            {
+                data: "amount",
+                render: function (data) {
+                    if (data) {
+                        return util.toNumber(data, 2);
+                    }
+
+                    return "";
+                }
+            }
+        ]
+    });
+
+    $("#btn-case-end-confirm").click(function(){
+        var len=$("input[name=channelList]:checked").length;
+        batchDelegate(false,function(data){
+
+            msg='<h5>操作成功,分配结果:</h5><br/>';
+
+            for(var i=0;i<data.result.length;i++){
+                for(var j=0;j<len;j++){
+                    msg+='<b>'+data.result[i][j].channelName+'</b>: 批次'+data.result[i][j].packageNo+', '+(data.result[i][j].amount).toFixed(2)+'元, '+data.result[i][j].count+'个案子<br/>';
+                }
+            }
+            if(window.localStorage.getItem("kaixin")==1){
+                bootbox.alert(msg, function(){
+                    window.location.href='/PDLOnPassageCase';
+                    window.localStorage.removeItem("kaixin")
+                });
+
+            }else if(window.sessionStorage.getItem("type")==1){
+                bootbox.alert(msg, function(){
+                    window.location.href='/smallOnPassage';
+                    window.localStorage.removeItem("type")
+                });
+            }else{
+                bootbox.alert(msg, function(){
+                    window.location.href='/DelegateOnPassage';
+                });
+            }
+
+        });
+    });
+
+
+
+    function checkCollectionCase(preview) {
+        
+        var list = [] ; 
+
+        $("input[name=channelList]:checked").each(function(){
+            var val=$(this).val();
+            var num= parseInt($('input[name=per_'+val).val());
+            var str = val+"=" + num ;
+            list.push(str) ;
+        });
+        
+        $.ajax({
+            url:util.baseUrl + "/onPassageCase/batchDelegate" ,
+            //url: util.baseUrl + '/collection/verifyCase',
+            type:"POST",
+            dataType : 'json',
+            contentType: "application/json",
+            data: JSON.stringify({
+                detailIdList:ids.split(",") ,
+                sysUserId: util.get_id(),
+                appIdList:apps.split(","),
+                isPreview:preview,
+                channelPercentList:list,
+                
+
+            }),
+            success: function (data) {
+                if (data.cmd != 0) {
+                    bootbox.alert(data.msg);
+                    return;
+                }
+
+                if (data.result.length != 0) {
+                    tbCaseCheck.clear().draw();
+                    tbCaseCheck.rows.add(data.result);
+                    tbCaseCheck.columns.adjust().draw();
+                    //$('#modal-case-check').modal('show');
+                } else {
+                    batchDelegatePreview();
+                }
+            },
+            error: function (argument) {
+                bootbox.alert(json.msg || "服务器错误")
+            }
+        });
+    };
+
+    $("#btn-delegate-confirm").click(function(){
+        var len=$("input[name=channelList]:checked").length;
+        batchDelegate(false,function(data){
+
+            msg='<h5>操作成功,分配结果:</h5><br/>';
+
+            for(var i=0;i<data.result.length;i++){
+                for(var j=0;j<len;j++){
+                    msg+='<b>'+data.result[i][j].channelName+'</b>: 批次'+data.result[i][j].packageNo+', '+data.result[i][j].amount+'元, '+data.result[i][j].count+'个案子<br/>';
+                }
+            }
+            if(window.localStorage.getItem("kaixin")==1){
+                bootbox.alert(msg, function(){
+                    window.location.href='/PDLOnPassageCase';
+                    window.localStorage.removeItem("kaixin")
+                });
+
+            }else if(window.sessionStorage.getItem("type")==1){
+                bootbox.alert(msg, function(){
+                    window.location.href='/smallOnPassage';
+                    window.localStorage.removeItem("type")
+                });
+            }else{
+                bootbox.alert(msg, function(){
+                    window.location.href='/DelegateOnPassage';
+                });
+            }
+
+        });
+
+
+    })
+
+    $('#btn-cancel').click(function(){
+        window.location.href='/smallOnPassage';
+    })
+
+    var includeAll = false;
+    $('#btn-loan-check-confirm').click(function () {
+        checkCollectionCase();
+        includeAll = true;
+    });
+    $('#btn-loan-check-cancel').click(function () {
+        if(isEarly) {
+            includeAll = false;
+            checkCollectionCase();
+        }
+    });
+
+
+    $('#btn-case-check-confirm').on('click', function () {
+        batchDelegatePreview();
+    });
+    $('#btn-case-check-cancel').on('click', function () {
+        if(isEarly)
+            batchDelegatePreview();
+    });
+
+
+
+    function batchDelegate(preview,callback) {
+        if (!preview) {
+            if ($('#start').datepicker({dateFormat: 'yyyy-mm-dd'}).val() > $('#end').datepicker({dateFormat: 'yyyy-mm-dd'}).val()) {
+                bootbox.alert("截至日不能小于开始日");
+                return;
+            }
+            if ($('#start').datepicker({dateFormat: 'yyyy-mm-dd'}).val() < util.formatDate(new Date(), "yyyy-MM-dd")) {
+                bootbox.alert("开始日期不能小于当前日期");
+                return;
+            }
+        }
+
+        var param={
+            sysUserId: util.get_id(),
+            delegateType: $("#delegateType").val(),
+            startTime: $('#start').datepicker({dateFormat: 'yyyy-mm-dd'}).val(),
+            endTime: $('#end').datepicker({dateFormat: 'yyyy-mm-dd'}).val(),
+            detailIdList: ids,
+            appIdList:apps,
+            isPreview:preview,
+            isDelegate:$('#delegate-checkbox').checked,
+            channelList:[],
+            includeAll:includeAll
+        };
+
+        $("input[name=channelList]:checked").each(function(){
+            var id=$(this).val();
+            param.channelList.push(id);
+            param['per_'+id]=$('input[name=per_'+id).val();
+        });
+        param.channelList=param.channelList.join(',')
+
+
+        $.ajax({
+            url: util.baseUrl + '/collection/batchDelegate',
+            cache: false,
+            data: param,
+            success: function (data) {
+                if (data.code!=0) {
+                    bootbox.alert(data.msg || "服务器错误");
+                    return;
+                }
+
+                callback&&callback(data);
+            },
+            error: function (argument) {
+                bootbox.alert(json.msg || "服务器错误")
+            }
+        });
+    }
+});
+

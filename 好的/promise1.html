@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.js"></script>
+	</head>
+	<body>
+	</body>
+</html>
+<script type="text/javascript">
+	
+	var num = 0 ;
+	var timer = setInterval(()=>{
+		num = num + 1 ; 
+	},1000)
+	
+	function doubleAfter(){
+		return new Promise((resolve,reject)=>{
+			setTimeout(()=>{
+				//resolve(true)
+			},1000)
+			
+		})
+	}
+	
+	async function testResult(){
+		await doubleAfter() ;
+		console.log("a:",num) ;
+		await doubleAfter() ;
+		console.log("b:",num) ;
+		await doubleAfter() ;
+		console.log("c:",num) ;
+		await doubleAfter() ;
+		clearInterval(timer);
+		console.log("d:",num) ;
+		
+	}
+	
+	testResult()
+	
+//	var p1 = new Promise(function(resolve,reject){
+//		setTimeout(function(){
+//			resolve() ;
+//		},1000)
+//	})
+//	var p2 = new Promise(function(resolve,reject){
+//		setTimeout(function(){
+//			resolve() ;
+//		},1000)
+//	})
+//	var p3 = new Promise(function(resolve,reject){
+//		setTimeout(function(){
+//			resolve() ;
+//		},1000)
+//	})
+//	var p4 = new Promise(function(resolve,reject){
+//		setTimeout(function(){
+//			resolve() ;
+//		},1000)
+//	})
+//	Promise.all([p1,p2,p3,p4]).then(function(result){
+//		clearInterval(timer);
+//		console.log(num) ;
+//	})
+
+	
+</script>
